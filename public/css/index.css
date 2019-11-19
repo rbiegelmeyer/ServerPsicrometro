@@ -1,0 +1,42 @@
+.bmp-chart {
+    /* width : 1000px !important; */
+    /* height : 33% !important; */
+    /* background-color: #2e2a2a !important */
+    /* height: 10vw; */
+}
+
+.canvas-container {
+    height: 33vh;
+    width: 85vh;
+}
+
+.canvas-col-1 {
+    position: relative;
+    float: left;
+}
+.canvas-col-2 {
+    position: relative;
+    float: left;
+}
+
+@media screen and (min-width: 768px) {
+    .canvas-col-1 {
+        position: absolute;
+        float: left;
+    }
+
+    .canvas-col-2 {
+        position: absolute;
+        float: left;
+        left: 50%;
+    }
+}
+
+
+.all-canvas {
+    /* position: relative; */
+
+    /* display: flex; */
+    /* align-self: center; */
+    
+}

@@ -1,0 +1,270 @@
+<html lang="pt-br">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE-edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" type="text/css" href="/css/index.css">
+
+    <title>Psicrômetro</title>
+
+    <!-- Socket.io - aqui chamamos nosso socket. -->
+    <script src="/socket.io/socket.io.js"></script>
+
+    <!-- Chart - aqui chamamos nossa lib que gera o gráfico. -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.4/Chart.min.js"></script>
+
+</head>
+
+<body>
+    <!-- criamos um canvas e atribuímos um tamanho que será o gráfico. -->
+    <div class="all-canvas">
+        <div class="canvas-col-1">
+            <div class="canvas-container">
+                <canvas class="bmp-chart" id="bmp_pressure"></canvas>
+            </div>
+            <div class="canvas-container">
+                <canvas class="bmp-chart" id="bmp_temperature"></canvas>
+            </div>
+            <div class="canvas-container">
+                <canvas class="bmp-chart" id="bmp_humidity"></canvas>
+            </div>
+        </div>
+        <div class="canvas-col-2">
+            <div class="canvas-container">
+                <canvas class="ds-chart" id="ds-normal-temperature"></canvas>
+            </div>
+            <div class="canvas-container">
+                <canvas class="ds-chart" id="ds-humid-temperature"></canvas>
+            </div>
+            <div class="canvas-container">
+                <canvas class="ds-chart" id="calculated-humidity"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        var ctx_bmp_humidity = document.getElementById("bmp_humidity").getContext("2d");
+        var ctx_bmp_pressure = document.getElementById("bmp_pressure").getContext("2d");
+        var ctx_bmp_temperature = document.getElementById("bmp_temperature").getContext("2d");
+
+        var ctx_normal_temperature = document.getElementById("ds-normal-temperature").getContext("2d");
+        var ctx_humid_temperature = document.getElementById("ds-humid-temperature").getContext("2d");
+        var ctx_calculated_humidity = document.getElementById("calculated-humidity").getContext("2d");
+
+        // ctx_bmp_humidity.style.backgroundColor = 'rgba(255,0,0,255)';
+
+        var data_bmp_humidity = {
+            labels: [],
+            datasets: [{
+                label: "Umidade Sensor BMP280 (%)",
+                fill: false,
+                backgroundColor: 'rgba(0, 0, 255, 1)',
+                borderColor: 'rgba(0, 0, 255, 0.5)',
+                data: []
+            }]
+        };
+        var options_bmp_humidity = {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        suggestedMin: 0,
+                        suggestedMax: 100,
+                        spetSize: 10
+                    }
+                }]
+            }
+        };
+
+        var data_bmp_pressure = {
+            labels: [],
+            datasets: [{
+                label: "Pressão Atmosférica (kPa)",
+                fill: false,
+                backgroundColor: 'rgba(255,193,80,1)',
+                borderColor: 'rgba(255,193,80,0.5)',
+                data: []
+            }]
+        };
+        var options_bmp_pressure = {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        suggestedMin: 90,
+                        suggestedMax: 110,
+                        stepSize: 5
+                    }
+                }]
+            }
+        };
+
+        var data_bmp_temperature = {
+            labels: [],
+            datasets: [{
+                label: "Temperatura Sensor (°C)",
+                fill: false,
+                backgroundColor: 'rgba(255,100,0,1)',
+                borderColor: 'rgba(255,100,0,0.5)',
+                data: []
+            }]
+        };
+        var options_bmp_temperature = {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        suggestedMin: 10,
+                        suggestedMax: 40
+                    }
+                }]
+            }
+        };
+
+        var data_normal_temperature = {
+            labels: [],
+            datasets: [{
+                label: "Temperatura Bulso Seco (°C)",
+                fill: false,
+                backgroundColor: 'rgba(255,36,0,1)',
+                borderColor: 'rgba(255,36,0,0.5)',
+                data: []
+            }]
+        };
+        var options_normal_temperature = {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        suggestedMin: 10,
+                        suggestedMax: 40
+                    }
+                }]
+            }
+        };
+
+        var data_humid_temperature = {
+            labels: [],
+            datasets: [{
+                label: "Temperatura Bulbo Úmido (°C)",
+                fill: false,
+                backgroundColor: 'rgba(110,203,226,1)',
+                borderColor: 'rgba(110,203,226,0.5)',
+                data: []
+            }]
+        };
+        var options_humid_temperature = {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        suggestedMin: 10,
+                        suggestedMax: 40
+                    }
+                }]
+            }
+        };
+
+        var data_calculated_humidity = {
+            labels: [],
+            datasets: [{
+                label: "Umidade Calculada (%)",
+                fill: false,
+                backgroundColor: 'rgba(0,255,63,1)',
+                borderColor: 'rgba(0,255,63,0.5)',
+                data: []
+            }]
+        };
+        var options_calculated_humidity = {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        suggestedMin: 0,
+                        suggestedMax: 100
+                    }
+                }]
+            }
+        };
+
+        var chart_bmp_temperature = new Chart(ctx_bmp_temperature, {
+            type: 'line',
+            data: data_bmp_temperature,
+            options: options_bmp_temperature
+        });
+
+        var chart_bmp_humidity = new Chart(ctx_bmp_humidity, {
+            type: 'line',
+            data: data_bmp_humidity,
+            options: options_bmp_humidity
+        });
+
+        var chart_bmp_pressure = new Chart(ctx_bmp_pressure, {
+            type: 'line',
+            data: data_bmp_pressure,
+            options: options_bmp_pressure
+        });
+
+        var chart_normal_temperature = new Chart(ctx_normal_temperature, {
+            type: 'line',
+            data: data_normal_temperature,
+            options: options_normal_temperature
+        });
+
+        var chart_humid_temperature = new Chart(ctx_humid_temperature, {
+            type: 'line',
+            data: data_humid_temperature,
+            options: options_humid_temperature
+        });
+
+        var chart_calculated_humidity = new Chart(ctx_calculated_humidity, {
+            type: 'line',
+            data: data_calculated_humidity,
+            options: options_calculated_humidity
+        });
+
+    </script>
+
+    <script type="text/javascript">
+        var socket = io();
+
+        socket.on("data", function (dado) {
+            // var now = new Date();
+
+            // var horario = now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds()
+            var horario = ''
+
+            addData(chart_bmp_temperature, horario, dado.tempBMP)
+            addData(chart_bmp_pressure, horario, dado.pressure)
+            addData(chart_bmp_humidity, horario, dado.humidityBMP)
+
+            addData(chart_normal_temperature, horario, dado.temp1)
+            addData(chart_humid_temperature, horario, dado.temp2)
+            addData(chart_calculated_humidity, horario, dado.humidity)
+        });
+
+        function addData(chart, label, x) {
+            chart.data.labels.push(label)
+            chart.data.datasets[0].data.push(x);
+
+            if (chart.data.datasets[0].data.length >= 30) {
+                chart.data.datasets[0].data.shift()
+                chart.data.labels.shift()
+            }
+
+            chart.update();
+        }
+    </script>
+
+
+</body>
+
+</html>
